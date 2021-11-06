@@ -142,7 +142,7 @@ class SANModel(nn.Module):
     # num_attention_layer and num_mlp_layer not implemented yet
     def __init__(self, embed_size, qst_vocab_size, ans_vocab_size, word_embed_size, num_layers, hidden_size): 
         super(SANModel, self).__init__()
-        self.num_attention_layer = 1
+        self.num_attention_layer = 4
         self.num_mlp_layer = 1
         self.img_encoder = ImgAttentionEncoder(embed_size)
         self.qst_encoder = QstEncoder(qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size)
