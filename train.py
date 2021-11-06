@@ -50,7 +50,7 @@ def main(args):
             + list(model.qst_encoder.parameters()) \
             + list(model.san.parameters()) \
             + list(model.fc1.parameters())\
-            + list(model.fc2.parameteres())
+            + list(model.fc2.parameters())
 
     criterion = nn.CrossEntropyLoss()
 
