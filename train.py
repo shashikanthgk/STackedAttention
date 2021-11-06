@@ -38,10 +38,15 @@ def main(args):
         word_embed_size=args.word_embed_size,
         num_layers=args.num_layers,
         hidden_size=args.hidden_size).to(device)
-    
+    params = list(model.img_encoder.fc.parameters()\
+        + list(model.qst_encoder.parameters()) \
+        + list(model.san.parameters()) \
+        + list(model.mlp.parameters())
+    )
+
     criterion = nn.CrossEntropyLoss()
 
-    optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
+    optimizer = optim.Adam(params, lr=args.learning_rate)
     scheduler = lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
 
     for epoch in range(args.num_epochs):
