@@ -102,6 +102,7 @@ class ImgAttentionEncoder(nn.Module):
         self.cnn = nn.Sequential(*modules)
         self.fc = nn.Sequential(nn.Linear(self.cnn[-3].out_channels, embed_size),
                                 nn.Tanh())     # feature vector of image
+    
 
     def forward(self, image):
         """Extract feature vector from image vector.
@@ -110,9 +111,10 @@ class ImgAttentionEncoder(nn.Module):
             img_feature = self.cnn(image)                           # [batch_size, vgg16(19)_fc=4096]
         img_feature = img_feature.view(-1, 512, 196).transpose(1,2) # [batch_size, 196, 512]
         img_feature = self.fc(img_feature)                          # [batch_size, 196, embed_size]
+        l2_norm = img_feature.norm(p=2, dim=1, keepdim=True).detach()
+        img_feature = img_feature.div(l2_norm)               # l2-normalized feature vector
 
         return img_feature
-
 
 class Attention(nn.Module):
     def __init__(self, num_channels, embed_size, dropout=True):
@@ -143,7 +145,7 @@ class SANModel(nn.Module):
     # num_attention_layer and num_mlp_layer not implemented yet
     def __init__(self, embed_size, qst_vocab_size, ans_vocab_size, word_embed_size, num_layers, hidden_size): 
         super(SANModel, self).__init__()
-        self.num_attention_layer = 2
+        self.num_attention_layer = 1
         self.num_mlp_layer = 1
         self.img_encoder = ImgAttentionEncoder(embed_size)
         self.qst_encoder = QstEncoder(qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size)
