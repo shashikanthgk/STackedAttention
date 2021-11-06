@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 from data_loader import get_loader
-from models import VqaModel,VWSA
+from models import VqaModel, SANModel
 import sys
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -29,40 +29,19 @@ def main(args):
     qst_vocab_size = data_loader['train'].dataset.qst_vocab.vocab_size
     ans_vocab_size = data_loader['train'].dataset.ans_vocab.vocab_size
     ans_unk_idx = data_loader['train'].dataset.ans_vocab.unk2idx
-    if args.model == "BVQA":
-        model = VqaModel(
-            embed_size=args.embed_size,
-            qst_vocab_size=qst_vocab_size,
-            ans_vocab_size=ans_vocab_size,
-            word_embed_size=args.word_embed_size,
-            num_layers=args.num_layers,
-            hidden_size=args.hidden_size).to(device)
-        params = list(model.img_encoder.fc.parameters()) \
-        + list(model.qst_encoder.parameters()) \
-        + list(model.fc1.parameters()) \
-        + list(model.fc2.parameters())
-
-    elif args.model == 'VWSA':
-        model = VWSA(
-            embed_size=args.embed_size,
-            qst_vocab_size=qst_vocab_size,
-            ans_vocab_size=ans_vocab_size,
-            word_embed_size=args.word_embed_size,
-            num_layers=args.num_layers,
-            hidden_size=args.hidden_size).to(device)
-        params = list(model.img_encoder.fc.parameters())\
-        + list(model.qst_encoder.parameters()) \
-        + list(model.att.parameters()) \
-        + list(model.fc1.parameters())\
-        + list(model.fc2.parameters())
-    else:
-        print("No specific model is mentioned! Aborting ...... !!!")
-        exit(0)
-
     criterion = nn.CrossEntropyLoss()
 
+    model = SANModel(
+        embed_size=args.embed_size,
+        qst_vocab_size=qst_vocab_size,
+        ans_vocab_size=ans_vocab_size,
+        word_embed_size=args.word_embed_size,
+        num_layers=args.num_layers,
+        hidden_size=args.hidden_size).to(device)
+    
+    criterion = nn.CrossEntropyLoss()
 
-    optimizer = optim.Adam(params, lr=args.learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
     scheduler = lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
 
     for epoch in range(args.num_epochs):
