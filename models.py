@@ -143,18 +143,18 @@ class SANModel(nn.Module):
     # num_attention_layer and num_mlp_layer not implemented yet
     def __init__(self, embed_size, qst_vocab_size, ans_vocab_size, word_embed_size, num_layers, hidden_size): 
         super(SANModel, self).__init__()
-        self.num_attention_layer = 1
+        self.num_attention_layer = 2
         self.num_mlp_layer = 1
         self.img_encoder = ImgAttentionEncoder(embed_size)
         self.qst_encoder = QstEncoder(qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size)
         self.san = nn.ModuleList([Attention(512, embed_size)]*self.num_attention_layer)
         self.tanh = nn.Tanh()
-        self.fc1 = nn.Linear(embed_size, ans_vocab_size)
-        self.fc2 = nn.Linear(ans_vocab_size, ans_vocab_size)
-        self.dropout = nn.Dropout(0.5)
+        self.mlp = nn.Sequential(nn.Dropout(p=0.5),
+                            nn.Linear(embed_size, ans_vocab_size))
         self.attn_features = []  ## attention features
-    
+
     def forward(self, img, qst):
+
         img_feature = self.img_encoder(img)                     # [batch_size, embed_size]
         qst_feature = self.qst_encoder(qst)                     # [batch_size, embed_size]
         vi = img_feature
@@ -162,10 +162,6 @@ class SANModel(nn.Module):
         for attn_layer in self.san:
             u = attn_layer(vi, u)
 #             self.attn_features.append(attn_layer.pi)
-        combined_feature = self.tanh(u)
-        combined_feature = self.dropout(combined_feature)
-        combined_feature = self.fc1(combined_feature)           
-        combined_feature = self.tanh(combined_feature)
-        combined_feature = self.dropout(combined_feature)
-        combined_feature = self.fc2(combined_feature)          
+            
+        combined_feature = self.mlp(u)
         return combined_feature
