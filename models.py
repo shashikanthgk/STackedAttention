@@ -147,7 +147,7 @@ class SANModel(nn.Module):
         self.num_mlp_layer = 1
         self.img_encoder = ImgAttentionEncoder(embed_size)
         self.qst_encoder = QstEncoder(qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size)
-        self.att = nn.ModuleList([Attention(512, embed_size)]*self.num_attention_layer)
+        self.san = nn.ModuleList([Attention(512, embed_size)]*self.num_attention_layer)
         self.tanh = nn.Tanh()
         self.fc1 = nn.Linear(embed_size, ans_vocab_size)
         self.fc2 = nn.Linear(ans_vocab_size, ans_vocab_size)
