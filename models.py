@@ -162,5 +162,9 @@ class SANModel(nn.Module):
         for attn_layer in self.san:
             u = attn_layer(vi, u)
 #             self.attn_features.append(attn_layer.pi)    
-        combined_feature = self.mlp(u)
-        return combined_feature
+        combined_feature = self.tanh(u)
+        combined_feature = self.dropout(combined_feature)
+        combined_feature = self.fc1(combined_feature)           
+        combined_feature = self.tanh(combined_feature)
+        combined_feature = self.dropout(combined_feature)
+        combined_feature = self.fc2(combined_feature)          

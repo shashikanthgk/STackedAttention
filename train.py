@@ -38,11 +38,11 @@ def main(args):
         word_embed_size=args.word_embed_size,
         num_layers=args.num_layers,
         hidden_size=args.hidden_size).to(device)
-    params = list(model.img_encoder.fc.parameters()\
+    params = list(model.img_encoder.fc.parameters())\
         + list(model.qst_encoder.parameters()) \
-        + list(model.san.parameters()) \
-        + list(model.mlp.parameters())
-    )
+        + list(model.att.parameters()) \
+        + list(model.fc1.parameters())\
+        + list(model.fc2.parameters())
 
     criterion = nn.CrossEntropyLoss()
 
