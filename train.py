@@ -45,26 +45,14 @@ def main(args):
         word_embed_size=args.word_embed_size,
         num_layers=args.num_layers,
         hidden_size=args.hidden_size).to(device)
-    
+        
     criterion = nn.CrossEntropyLoss()
 
-    # resume training
-    if args.resume_epoch!=0:  
-        model = torch.load(args.saved_model)
-        torch.cuda.empty_cache()
 
     optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
     scheduler = lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
 
-    #callbacks = [EarlyStopping(monitor='val_loss', patience=5)]
-    #model.set_callbacks(callbacks)
-    early_stop_threshold = 3
-    best_loss = 99999
-    val_increase_count = 0
-    stop_training = False
-    prev_loss = 9999
-
-    for epoch in range(args.resume_epoch, args.num_epochs):
+    for epoch in range(args.num_epochs):
 
         for phase in ['train', 'valid']:
 
@@ -80,19 +68,19 @@ def main(args):
                 model.eval()
 
             for batch_idx, batch_sample in enumerate(data_loader[phase]):
-#                 if batch_idx == 1:
-#                     break
+
                 image = batch_sample['image'].to(device)
                 question = batch_sample['question'].to(device)
                 label = batch_sample['answer_label'].to(device)
-                multi_choice = batch_sample['answer_multi_choice']  # not tensor, list.
+                multi_choice = batch_sample['answer_multi_choice'] 
 
                 optimizer.zero_grad()
+
                 with torch.set_grad_enabled(phase == 'train'):
 
-                    output = model(image, question)      # [batch_size, ans_vocab_size=1000]
-                    _, pred_exp1 = torch.max(output, 1)  # [batch_size]
-                    _, pred_exp2 = torch.max(output, 1)  # [batch_size]
+                    output = model(image, question)      
+                    _, pred_exp1 = torch.max(output, 1)  
+                    _, pred_exp2 = torch.max(output, 1)  
                     loss = criterion(output, label)
 
                     if phase == 'train':
@@ -107,58 +95,46 @@ def main(args):
                 running_corr_exp1 += torch.stack([(ans == pred_exp1.cpu()) for ans in multi_choice]).any(dim=0).sum()
                 running_corr_exp2 += torch.stack([(ans == pred_exp2.cpu()) for ans in multi_choice]).any(dim=0).sum()
 
-                # Print the average loss after every batch.
-                if batch_idx % 1 == 0:
+                if batch_idx % 100 == 0:
+                    original_stdout = sys.stdout
+                    with open('result.txt', 'a') as f:
+                        sys.stdout = f 
+                        print('| {} SET | Epoch [{:02d}/{:02d}], Step [{:04d}/{:04d}], Loss: {:.4f}'
+                          .format(phase.upper(), epoch+1, args.num_epochs, batch_idx, int(batch_step_size), loss.item()))
+                        sys.stdout = original_stdout 
+
                     print('| {} SET | Epoch [{:02d}/{:02d}], Step [{:04d}/{:04d}], Loss: {:.4f}'
-                          .format(phase.upper(), epoch+1, args.num_epochs, batch_idx, int(batch_step_size), loss.item()), end = '\r')
+                          .format(phase.upper(), epoch+1, args.num_epochs, batch_idx, int(batch_step_size), loss.item()))
 
-            # Print the average loss and accuracy in an epoch.
             epoch_loss = running_loss / batch_step_size
-#             epoch_loss = running_loss / 1  ## to be removed
-#             epoch_acc_exp1 = running_corr_exp1.double() / (args.batch_size * 1)     ## to be removed
-            epoch_acc_exp1 = running_corr_exp1.double() / len(data_loader[phase].dataset)      # multiple choice
-            epoch_acc_exp2 = running_corr_exp2.double() / len(data_loader[phase].dataset)      # multiple choice
-
+            epoch_acc_exp1 = running_corr_exp1.double() / len(data_loader[phase].dataset)      
+            epoch_acc_exp2 = running_corr_exp2.double() / len(data_loader[phase].dataset)      
+            original_stdout = sys.stdout
+            with open('result.txt', 'a') as f:
+                sys.stdout = f 
+                print('| {} SET | Epoch [{:02d}/{:02d}], Loss: {:.4f}, Acc(Exp1): {:.4f}, Acc(Exp2): {:.4f} \n'
+                  .format(phase.upper(), epoch+1, args.num_epochs, epoch_loss, epoch_acc_exp1, epoch_acc_exp2))
+                sys.stdout = original_stdout 
             print('| {} SET | Epoch [{:02d}/{:02d}], Loss: {:.4f}, Acc(Exp1): {:.4f}, Acc(Exp2): {:.4f} \n'
                   .format(phase.upper(), epoch+1, args.num_epochs, epoch_loss, epoch_acc_exp1, epoch_acc_exp2))
 
-            # Log the loss and accuracy in an epoch.
-            with open(os.path.join(args.log_dir, '{}-{}-log-epoch-{:02}.txt')
-                      .format(args.model_name, phase, epoch+1), 'w') as f:
+            with open(os.path.join(args.log_dir, '{}-log-epoch-{:02}.txt')
+                      .format(phase, epoch+1), 'w') as f:
                 f.write(str(epoch+1) + '\t'
                         + str(epoch_loss) + '\t'
                         + str(epoch_acc_exp1.item()) + '\t'
                         + str(epoch_acc_exp2.item()))
 
-            if phase == 'valid':
-                if epoch_loss < best_loss:
-                    best_loss = epoch_loss
-                    torch.save(model, os.path.join(args.model_dir, 'best_model.pt'))
-                if epoch_loss > prev_loss:
-                    val_increase_count += 1
-                else:
-                    val_increase_count = 0
-                if val_increase_count >= early_stop_threshold:
-                    stop_training = True
-                prev_loss = epoch_loss
-        # Save the model check points.
         if (epoch+1) % args.save_step == 0:
-#             pass
-#             torch.save({'epoch': epoch+1, 'state_dict': model.state_dict()},
-            torch.save(model,
-                       os.path.join(args.model_dir, '{}-epoch-{:02d}.pt'.format(args.model_name, epoch+1)))
+            torch.save({'epoch': epoch+1, 'state_dict': model.state_dict()},
+                       os.path.join(args.model_dir, 'model-epoch-{:02d}.ckpt'.format(epoch+1)))
 
-        if stop_training:
-            break
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    
-    parser.add_argument('--model_name', type=str,
-                        help='model name.') 
 
-    parser.add_argument('--input_dir', type=str, default='./datasets',
+    parser.add_argument('--input_dir', type=str, default='./datasets/1MP',
                         help='input directory for visual question answering.')
 
     parser.add_argument('--log_dir', type=str, default='./logs',
@@ -200,7 +176,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, default=30,
                         help='number of epochs.')
 
-    parser.add_argument('--batch_size', type=int, default=128,
+    parser.add_argument('--batch_size', type=int, default=64,
                         help='batch_size.')
 
     parser.add_argument('--num_workers', type=int, default=8,
@@ -208,11 +184,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--save_step', type=int, default=1,
                         help='save step of model.')
-    
-    parser.add_argument('--resume_epoch', type=int, default = 0,
-                        help='load saved model from which epoch')
-    
-    parser.add_argument('--saved_model', type=str, default = 'best_model.pt',
-                        help='load saved model from which epoch') 
+    parser.add_argument('--model', type=str, default='VWSA',
+                        help='Type of the mode to be trained.')
 
     args = parser.parse_args()
+
+    main(args)
