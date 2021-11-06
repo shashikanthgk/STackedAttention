@@ -165,7 +165,7 @@ if __name__ == '__main__':
     parser.add_argument('--hidden_size', type=int, default=512,
                         help='hidden_size in the LSTM.')
 
-    parser.add_argument('--learning_rate', type=float, default=0.1,
+    parser.add_argument('--learning_rate', type=float, default=0.001,
                         help='learning rate for training.')
 
     parser.add_argument('--step_size', type=int, default=10,

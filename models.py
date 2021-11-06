@@ -110,10 +110,8 @@ class ImgAttentionEncoder(nn.Module):
         with torch.no_grad():
             img_feature = self.cnn(image)                           # [batch_size, vgg16(19)_fc=4096]
         img_feature = img_feature.view(-1, 512, 196).transpose(1,2) # [batch_size, 196, 512]
-        img_feature = self.fc(img_feature)                          # [batch_size, 196, embed_size]
-        l2_norm = img_feature.norm(p=2, dim=1, keepdim=True).detach()
-        img_feature = img_feature.div(l2_norm)               # l2-normalized feature vector
-
+        img_feature = self.fc(img_feature)                          # [batch_size, 196, embed_size]          
+        # l2-normalized feature vector
         return img_feature
 
 class Attention(nn.Module):
