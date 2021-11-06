@@ -40,7 +40,7 @@ def main(args):
         hidden_size=args.hidden_size).to(device)
     params = list(model.img_encoder.fc.parameters())\
         + list(model.qst_encoder.parameters()) \
-        + list(model.att.parameters()) \
+        + list(model.san.parameters()) \
         + list(model.fc1.parameters())\
         + list(model.fc2.parameters())
 
