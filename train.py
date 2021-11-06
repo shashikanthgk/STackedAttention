@@ -31,7 +31,7 @@ def main(args):
     ans_unk_idx = data_loader['train'].dataset.ans_vocab.unk2idx
     criterion = nn.CrossEntropyLoss()
 
-    model = SANModel(
+    model = VWSA(
         embed_size=args.embed_size,
         qst_vocab_size=qst_vocab_size,
         ans_vocab_size=ans_vocab_size,
