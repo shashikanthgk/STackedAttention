@@ -7,6 +7,7 @@ import torch.optim as optim
 from torch.optim import lr_scheduler
 from data_loader import get_loader
 from models import VqaModel, SANModel
+import sys
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -45,7 +46,7 @@ def main(args):
         word_embed_size=args.word_embed_size,
         num_layers=args.num_layers,
         hidden_size=args.hidden_size).to(device)
-        
+
     criterion = nn.CrossEntropyLoss()
 
 
