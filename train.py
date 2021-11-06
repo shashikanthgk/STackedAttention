@@ -49,7 +49,8 @@ def main(args):
     params = list(model.img_encoder.fc.parameters())\
             + list(model.qst_encoder.parameters()) \
             + list(model.san.parameters()) \
-            + list(model.mlp.parameters())
+            + list(model.fc1.parameters())\
+            + list(model.fc2.parameteres())
 
     criterion = nn.CrossEntropyLoss()
 

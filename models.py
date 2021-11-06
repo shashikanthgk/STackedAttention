@@ -110,8 +110,9 @@ class ImgAttentionEncoder(nn.Module):
         with torch.no_grad():
             img_feature = self.cnn(image)                           # [batch_size, vgg16(19)_fc=4096]
         img_feature = img_feature.view(-1, 512, 196).transpose(1,2) # [batch_size, 196, 512]
-        img_feature = self.fc(img_feature)                          # [batch_size, 196, embed_size]          
-        # l2-normalized feature vector
+        img_feature = self.fc(img_feature)                          # [batch_size, 196, embed_size] 
+        l2_norm = img_feature.norm(p=2, dim=1, keepdim=True).detach()
+        img_feature = img_feature.div(l2_norm)               # l2-normalized feature vector
         return img_feature
 
 class Attention(nn.Module):
@@ -150,7 +151,8 @@ class SANModel(nn.Module):
         self.san = nn.ModuleList([Attention(512, embed_size)]*self.num_attention_layer)
         self.tanh = nn.Tanh()
         self.dropout = nn.Dropout(p=0.5)
-        self.mlp = nn.Linear(embed_size, ans_vocab_size)
+        self.fc1 = nn.Linear(embed_size, ans_vocab_size)
+        self.fc2 = nn.Linear(ans_vocab_size, ans_vocab_size)
         self.attn_features = []  ## attention features
 
     def forward(self, img, qst):
@@ -162,6 +164,10 @@ class SANModel(nn.Module):
         for attn_layer in self.san:
             u = attn_layer(vi, u)
 #             self.attn_features.append(attn_layer.pi)
-        u = self.dropout(u)
-        combined_feature = self.mlp(u)
+        combined_feature = self.tanh(u)
+        combined_feature = self.dropout(combined_feature)
+        combined_feature = self.fc1(combined_feature)           # [batch_size, ans_vocab_size=1000]
+        combined_feature = self.tanh(combined_feature)
+        combined_feature = self.dropout(combined_feature)
+        combined_feature = self.fc2(combined_feature)           # [batch_size, ans_vocab_size=1000]
         return combined_feature
