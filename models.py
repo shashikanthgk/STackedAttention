@@ -149,8 +149,11 @@ class SANModel(nn.Module):
         self.qst_encoder = QstEncoder(qst_vocab_size, word_embed_size, embed_size, num_layers, hidden_size)
         self.san = nn.ModuleList([Attention(512, embed_size)]*self.num_attention_layer)
         self.tanh = nn.Tanh()
-        self.mlp = nn.Sequential(nn.Dropout(p=0.5),
-                            nn.Linear(embed_size, ans_vocab_size))
+        self.fc1 = nn.Linear(embed_size, ans_vocab_size)
+        self.fc2 = nn.Linear(ans_vocab_size, ans_vocab_size)
+        self.dropout = nn.Dropout(0.5)
+        # self.mlp = nn.Sequential(nn.Dropout(p=0.5),
+        #                     nn.Linear(embed_size, ans_vocab_size))
         self.attn_features = []  ## attention features
 
     def forward(self, img, qst):
