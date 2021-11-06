@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 from data_loader import get_loader
-from models import VqaModel, VWSA
+from models import VqaModel, SANModel
 import sys
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -31,7 +31,7 @@ def main(args):
     ans_unk_idx = data_loader['train'].dataset.ans_vocab.unk2idx
     criterion = nn.CrossEntropyLoss()
 
-    model = VWSA(
+    model = SANModel(
         embed_size=args.embed_size,
         qst_vocab_size=qst_vocab_size,
         ans_vocab_size=ans_vocab_size,
