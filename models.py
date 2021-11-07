@@ -140,6 +140,7 @@ class Attention(nn.Module):
         pi = torch.softmax(ha, dim=1)
         print("ha size attention : ",ha.shape)
         self.pi = pi
+        print("pi size attention : ",self.pi.shape)
         vi_attended = (pi * vi).sum(dim=1)
         print("vi_attened size : ",vi_attended.shape)
         u = vi_attended + vq
