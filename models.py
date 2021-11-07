@@ -126,16 +126,25 @@ class Attention(nn.Module):
     def forward(self, vi, vq):
         """Extract feature vector from image vector.
         """
+        print("vi size ",vi.shape)
+        print("vq size : ",vq.shape)
         hi = self.ff_image(vi)
+        print("hi size : ",hi.shape)
         hq = self.ff_questions(vq).unsqueeze(dim=1)
+        print("hq size : ",hq.shape)
         ha = torch.tanh(hi+hq)
+        print("ha size : ",ha.shape)
         if self.dropout:
             ha = self.dropout(ha)
         ha = self.ff_attention(ha)
         pi = torch.softmax(ha, dim=1)
+        print("ha size attention : ",ha.shape)
         self.pi = pi
         vi_attended = (pi * vi).sum(dim=1)
+        print("vi_attened size : ",vi_attended.shape)
         u = vi_attended + vq
+        print("u size  size : ",u.shape)
+
         return u
 
 class SANModel(nn.Module):
