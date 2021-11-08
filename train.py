@@ -163,7 +163,7 @@ if __name__ == '__main__':
                         help='embedding size of word \
                               used for the input in the LSTM.')
 
-    parser.add_argument('--num_layers', type=int, default=2,
+    parser.add_argument('--num_layers', type=int, default=1,
                         help='number of layers of the RNN(LSTM).')
 
     parser.add_argument('--hidden_size', type=int, default=512,
