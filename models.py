@@ -42,7 +42,7 @@ class QstEncoder(nn.Module):
         super(QstEncoder, self).__init__()
         self.word2vec = nn.Embedding(qst_vocab_size, word_embed_size)
         self.tanh = nn.Tanh()
-        self.lstm = nn.LSTM(word_embed_size, hidden_size, num_layers,bidirectional=False)
+        self.lstm = nn.LSTM(word_embed_size, hidden_size, num_layers,bidirectional=True)
         self.fc = nn.Linear(2*num_layers*hidden_size, embed_size)     # 2 for hidden and cell states
 
     def forward(self, question):
@@ -54,6 +54,8 @@ class QstEncoder(nn.Module):
         qst_vec = qst_vec.transpose(0, 1)                             # [max_qst_length=30, batch_size, word_embed_size=300]
         print("qst_vec after transpose size : ",qst_vec.shape)
         _, (hidden, cell) = self.lstm(qst_vec)                        # [num_layers=2, batch_size, hidden_size=512]
+        hidden = torch.stack((torch.add(hidden[0],hidden[1]), torch.add(hidden[2],hidden[3])), dim=-3)
+        cell = torch.stack((torch.add(cell[0],cell[1]), torch.add(cell[2],cell[3])), dim=-3)
         print("hidden size : ",hidden.shape)
         print("cell size : ",cell.shape)
         qst_feature = torch.cat((hidden, cell), 2)                    # [num_layers=2, batch_size, 2*hidden_size=1024]
