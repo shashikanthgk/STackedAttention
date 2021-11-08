@@ -46,16 +46,27 @@ class QstEncoder(nn.Module):
         self.fc = nn.Linear(2*num_layers*hidden_size, embed_size)     # 2 for hidden and cell states
 
     def forward(self, question):
-
+        print("question size : ",question.shape)
         qst_vec = self.word2vec(question)                             # [batch_size, max_qst_length=30, word_embed_size=300]
+        print("qst_vec size : ",qst_vec.shape)
         qst_vec = self.tanh(qst_vec)
+        print("qst_vec after tanh size : ",qst_vec.shape)
         qst_vec = qst_vec.transpose(0, 1)                             # [max_qst_length=30, batch_size, word_embed_size=300]
+        print("qst_vec after transpose size : ",qst_vec.shape)
         _, (hidden, cell) = self.lstm(qst_vec)                        # [num_layers=2, batch_size, hidden_size=512]
+        print("hidden size : ",hidden.shape)
+        print("cell size : ",cell.shape)
         qst_feature = torch.cat((hidden, cell), 2)                    # [num_layers=2, batch_size, 2*hidden_size=1024]
+        print("qst_feature shape : ",qst_feature.shape)
         qst_feature = qst_feature.transpose(0, 1)                     # [batch_size, num_layers=2, 2*hidden_size=1024]
+        print("qst_feature after transpose shape : ",qst_feature.shape)   
         qst_feature = qst_feature.reshape(qst_feature.size()[0], -1)  # [batch_size, 2*num_layers*hidden_size=2048]
+        print("qst_feature after reshaping : ",qst_feature.shape)   
         qst_feature = self.tanh(qst_feature)
+        print("qst_feature after tanh : ",qst_feature.shape)   
+
         qst_feature = self.fc(qst_feature)                            # [batch_size, embed_size]
+        print("qst_feature after fc : ",qst_feature.shape)   
 
         return qst_feature
 
@@ -126,25 +137,25 @@ class Attention(nn.Module):
     def forward(self, vi, vq):
         """Extract feature vector from image vector.
         """
-        print("vi size ",vi.shape)
-        print("vq size : ",vq.shape)
+        # print("vi size ",vi.shape)
+        # print("vq size : ",vq.shape)
         hi = self.ff_image(vi)
-        print("hi size : ",hi.shape)
+        # print("hi size : ",hi.shape)
         hq = self.ff_questions(vq).unsqueeze(dim=1)
-        print("hq size : ",hq.shape)
+        # print("hq size : ",hq.shape)
         ha = torch.tanh(hi+hq)
-        print("ha size : ",ha.shape)
+        # print("ha size : ",ha.shape)
         if self.dropout:
             ha = self.dropout(ha)
         ha = self.ff_attention(ha)
         pi = torch.softmax(ha, dim=1)
-        print("ha size attention : ",ha.shape)
+        # print("ha size attention : ",ha.shape)
         self.pi = pi
-        print("pi size attention : ",self.pi.shape)
+        # print("pi size attention : ",self.pi.shape)
         vi_attended = (pi * vi).sum(dim=1)
-        print("vi_attened size : ",vi_attended.shape)
+        # print("vi_attened size : ",vi_attended.shape)
         u = vi_attended + vq
-        print("u size  size : ",u.shape)
+        # print("u size  size : ",u.shape)
 
         return u
 
