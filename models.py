@@ -42,7 +42,7 @@ class QstEncoder(nn.Module):
         super(QstEncoder, self).__init__()
         self.word2vec = nn.Embedding(qst_vocab_size, word_embed_size)
         self.tanh = nn.Tanh()
-        self.lstm = nn.LSTM(word_embed_size, hidden_size, num_layers)
+        self.lstm = nn.LSTM(word_embed_size, hidden_size, num_layers,bidirectional=True)
         self.fc = nn.Linear(2*num_layers*hidden_size, embed_size)     # 2 for hidden and cell states
 
     def forward(self, question):
